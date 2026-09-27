@@ -21,12 +21,12 @@ actions:
       - gstreamer1.0-plugins-base-apps
       - yq
 {{- if ne $device "wip" }}
-{{- if or (eq $device "sm8450") (eq $device "gts8wifi") (eq $device "r8q") }}
+{{- if or (eq $device "sm8250") (eq $device "gts8wifi") (eq $device "r8q") }}
       - qcom-support-common
 {{- if eq $device "r8q" }}
       - firmware-qcom-soc
 {{- end }}
-{{- if or (eq $device "sm8450") (eq $device "gts8wifi") }}
+{{- if or (eq $device "sm8250") (eq $device "r8q") }}
       - make
       - gcc
       - binutils
