@@ -14,7 +14,6 @@ on:
           - pinephonepro
           - pinetab2
           - librem5
-          - sm8250
           - sdm670
           - sdm845
           - sm6350
