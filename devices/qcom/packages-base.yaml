@@ -51,7 +51,7 @@ actions:
   - action: overlay
     description: Copy additional packages to image
 {{- if eq $device "r8q" }}
-    source: ../../packages/r8q
+    source: packages/r8q
 {{- else }}
     source: packages
 {{- end }}
@@ -78,7 +78,7 @@ actions:
 {{- if eq $device "r8q" }}
   - action: overlay
     description: Copy local r8q kernel packages to image
-    source: ../../packages/r8q
+    source: packages/r8q
     destination: /srv
 
   - action: run
