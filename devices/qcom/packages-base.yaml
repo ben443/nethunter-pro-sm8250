@@ -88,7 +88,7 @@ actions:
 
   - action: overlay
     description: Add fallback r8q DTB overlay
-    source: devices/qcom/overlays/r8q
+    source: overlays/r8q
     destination: /
 
   - action: run
