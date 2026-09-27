@@ -26,16 +26,16 @@ bootimg_offsets() {
     local PAGE_SIZE="$(echo "${BOOTIMG}" | jq -r '.pagesize' -)"
     local DTB="$(echo "${BOOTIMG}" | jq -r 'if .dtb then .dtb + .base else "" end' -)"
 
-    local ARGS="--kernel_offset ${KERNEL} --ramdisk_offset ${RAMDISK}"
-    ARGS="${ARGS} --second_offset ${SECOND} --tags_offset ${TAGS}"
-    ARGS="${ARGS} --pagesize ${PAGE_SIZE}"
+    local ARGS="--kernel_offset ${KERNEL} --ramdisk_offset${RAMDISK}"
+    ARGS="${ARGS} --second_offset ${SECOND} --tags_offset${TAGS}"
+    ARGS="${ARGS} --pagesize${PAGE_SIZE}"
 
     if [ "${VERSION}" != "0" ]; then
-        ARGS="${ARGS} --header_version ${VERSION}"
+        ARGS="${ARGS} --header_version${VERSION}"
     fi
 
     if [ "${DTB}" ]; then
-        ARGS="${ARGS} --dtb_offset ${DTB}"
+        ARGS="${ARGS} --dtb_offset${DTB}"
     fi
 
     echo "${ARGS}"
@@ -218,7 +218,11 @@ consider_kernel_candidate() {
 
 resolve_dtb_path() {
     local dtb_name="$1"
+    local REPO_ROOT="$(dirname "${SCRIPT}")"
+    
     for candidate in \
+        "${REPO_ROOT}/${dtb_name}" \
+        "${REPO_ROOT}/qcom/${dtb_name}" \
         "/usr/lib/linux-image-${KERNEL_VERSION}/qcom/${dtb_name}" \
         "/usr/lib/linux-image-qcom/qcom/${dtb_name}"
     do
@@ -241,23 +245,23 @@ if [ -z "${KERNEL_IMAGE}" ]; then
         if kernel_candidate_metadata "${candidate}"; then
             printf '%s%s%s%s%s\n' "${CANDIDATE_VERSION}" "${tab}" "${CANDIDATE_PRIORITY}" "${tab}" "${candidate}"
         fi
-    done | sort -t "${tab}" -k1,1Vr -k2,2n | cut -f3- > "${WORKDIR}/kernel-candidates.txt"
+    done | sort -t "${tab}" -k1,1Vr -k2,2n \vert{} cut -f3- > "${WORKDIR}/kernel-candidates.txt"
     while IFS= read -r candidate; do
         if consider_kernel_candidate "${candidate}"; then
             break
         fi
     done < "${WORKDIR}/kernel-candidates.txt"
 fi
-if [ -z "${KERNEL_IMAGE}" ] || [ -z "${KERNEL_VERSION}" ] || [ -z "${RAMDISK_IMAGE}" ]; then
+if [ -z "${KERNEL_IMAGE}" ] || [ -z "${KERNEL_VERSION}" ] \vert{}\vert{} [ -z "${RAMDISK_IMAGE}" ]; then
     echo "WARN: unable to locate matching kernel and ramdisk artifacts for ${DEVICE}; skipping boot image generation"
     exit 0
 fi
 
 # Parse config for generic parameters for the current SoC
 SOC=$(tomlq -r "if .chipset then .chipset else \"${DEVICE}\" end" ${CONFIG})
-MKBOOTIMG_ARGS="$(bootimg_offsets "$(tomlq -r '.bootimg' ${CONFIG})")"
+MKBOOTIMG_ARGS="$(bootimg_offsets "$(tomlq -r '.bootimg'${CONFIG})")"
 
-for i in $(seq 0 $(tomlq -r '.device | length - 1' ${CONFIG})); do
+for i in $(seq 0 $(tomlq -r '.device \vert{} length - 1'${CONFIG})); do
     # Parse device-specific parameters
     VENDOR=$(tomlq -r ".device[$i].vendor" ${CONFIG})
     MODEL=$(tomlq -r ".device[$i].model" ${CONFIG})
@@ -293,14 +297,14 @@ for i in $(seq 0 $(tomlq -r '.device | length - 1' ${CONFIG})); do
         fi
         fallback_name="${DEVICE_SOC}-${DTB_VENDOR}-${fallback_fullmodel}.dtb"
         if [ "${fallback_name}" != "${DTB_NAME}" ]; then
-            DTB_NAMES="${DTB_NAMES} ${fallback_name}"
+            DTB_NAMES="${DTB_NAMES}${fallback_name}"
         fi
     done
 
     LOGLEVEL="quiet"
     # Include additional cmdline args if specified
     if [ "${APPEND}" ]; then
-        CMDLINE="${CMDLINE} ${APPEND}"
+        CMDLINE="${CMDLINE}${APPEND}"
         if echo "${APPEND}" | grep -q "console="; then
             LOGLEVEL="loglevel=7"
         fi
@@ -321,10 +325,10 @@ for i in $(seq 0 $(tomlq -r '.device | length - 1' ${CONFIG})); do
             fi
         done
         if [ -z "${DTB_FILE}" ]; then
-            echo "WARN: unable to locate DTB artifact for ${FULLMODEL}; tried ${DTB_NAMES}; skipping boot image generation"
+            echo "WARN: unable to locate DTB artifact for ${FULLMODEL}; tried${DTB_NAMES}; skipping boot image generation"
             continue
         fi
-        BOOTIMG_ARGS="${BOOTIMG_ARGS} --dtb ${DTB_FILE}"
+        BOOTIMG_ARGS="${BOOTIMG_ARGS} --dtb${DTB_FILE}"
         KERNEL_DTB="${WORKDIR}/kernel-dtb-${FULLMODEL}"
         cat "${KERNEL_IMAGE}" "${DTB_FILE}" > "${KERNEL_DTB}"
         KERNEL_ARG="${KERNEL_DTB}"
@@ -333,7 +337,10 @@ for i in $(seq 0 $(tomlq -r '.device | length - 1' ${CONFIG})); do
     echo "Creating boot image for ${FULLMODEL}..."
 
     # Create the bootimg as it's the only format recognized by the Android bootloader
-    mkbootimg -o /bootimg-${FULLMODEL} ${BOOTIMG_ARGS} \
+    mkbootimg -o /bootimg-${FULLMODEL}${BOOTIMG_ARGS} \
         --kernel "${KERNEL_ARG}" --ramdisk "${RAMDISK_IMAGE}" \
-        --cmdline "mobile.root=${ROOTPART} ${CMDLINE} init=/sbin/init ro ${LOGLEVEL} splash"
+        --cmdline "mobile.root=${ROOTPART} ${CMDLINE} init=/sbin/init ro${LOGLEVEL} splash"
 done
+```[span_0](start_span)[span_0](end_span)
+
+You can completely replace the contents of your existing `bootloader-nhp.sh` with this code. Once saved, just drop `sm8250-samsung-r8q.dtb` directly into the same folder as this script, and the builder will pick it up automatically during the `boot.img` generation phase.
