@@ -304,7 +304,7 @@ for i in $(seq 0 $(tomlq -r '.device | length - 1' "${CONFIG}")); do
     LOGLEVEL="quiet"
     # Include additional cmdline args if specified
     if [ "${APPEND}" ]; then
-        CMDLINE="${CMDLINE}${APPEND}"
+        CMDLINE="${CMDLINE} ${APPEND}"
         if echo "${APPEND}" | grep -q "console="; then
             LOGLEVEL="loglevel=7"
         fi
