@@ -60,6 +60,12 @@ Build examples:
 
 The `r8q` qcom config uses Samsung-style bootimg v2 offsets and now takes DTBs directly from the installed kernel package (`/usr/lib/linux-image-*/qcom`). Boot image generation tries `sm8250-samsung-r8q.dtb` first and falls back to `sm8250-samsung-r8s.dtb` for kernels that use mainline naming. The image build also regenerates the installed kernel initramfs so boot image creation can find matching kernel and ramdisk artifacts without skipping `boot.img`.
 
+#### Experimental U-Boot path
+
+The [r8q U-Boot port](https://github.com/ben443/u-boot-r8q) provides an [R8Q build workflow](https://github.com/ben443/u-boot-r8q/blob/master/.github/workflows/build-images.yml) and a [boot guide](https://github.com/ben443/u-boot-r8q/blob/master/NETHUNTER_BOOT.md). This is a separate, experimental boot path and is not currently built or integrated by this repository.
+
+Do not treat its `u-boot-r8q-boot.img` or boot instructions as drop-in replacements for this target. The upstream guide describes a standalone ext4 root partition (for example, `/dev/sda1`), whereas this target's boot arguments point initramfs to a rootfs image stored on the `userdata` partition (`rootimg=PARTLABEL=userdata/media/0/data/rootfs.img`) and mount that image through a loop device. Boot arguments, partition discovery, and initramfs behavior must be reconciled and tested on the device before attempting to boot this image with U-Boot. The existing NetHunter `boot.img` build remains the supported path here.
+
 Building with disk encryption support will also require the package `cryptsetup` to be installed
 on your host.
 
