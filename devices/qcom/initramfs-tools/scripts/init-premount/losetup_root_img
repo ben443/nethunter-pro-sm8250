@@ -34,12 +34,30 @@ if [ -z "${IMGPART}" ] || [ -z "${IMGRELPATH}" ]; then
     exit 0
 fi
 
-# Resolve block device by raw name or blkid tag (PARTLABEL=, UUID=, LABEL=)
-if [ -b "/dev/${IMGPART}" ]; then
-    DEVICE="/dev/${IMGPART}"
-elif DEVICE="$(blkid -l -t "${IMGPART}" -o device 2>/dev/null)" && [ -b "${DEVICE}" ]; then
-    : # DEVICE assigned above
-else
+resolve_partition_device() {
+    partition="$1"
+    if [ -b "/dev/${partition}" ]; then
+        printf '%s\n' "/dev/${partition}"
+        return 0
+    fi
+
+    device="$(blkid -l -t "${partition}" -o device 2>/dev/null)" || return 1
+    [ -b "${device}" ] || return 1
+    printf '%s\n' "${device}"
+}
+
+DEVICE=""
+WAITED=0
+while [ "${WAITED}" -le 30 ]; do
+    if DEVICE="$(resolve_partition_device "${IMGPART}")"; then
+        break
+    fi
+    [ "${WAITED}" -lt 30 ] || break
+    sleep 1
+    WAITED=$((WAITED + 1))
+done
+
+if [ -z "${DEVICE}" ]; then
     log_warning_msg "cannot resolve device for '${IMGPART}'"
     exit 1
 fi
