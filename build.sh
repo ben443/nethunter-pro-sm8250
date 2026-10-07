@@ -9,8 +9,8 @@ if [ -z "${ARGS+x}" ]; then
 fi
 
 ## NOTE: If editing below, make sure to update `./*.yml` for GitLab-CI, as it doesn't call this file (`./build.sh`)
-device="pinephone"
-image="image"
+device="r8q"
+image="zimage"
 partitiontable="gpt"
 filesystem="ext4"
 environment="phosh"
@@ -19,7 +19,7 @@ crypt_password=
 hostname=
 arch="arm64"
 do_compress=
-family=
+family=qcom
 image_only=
 installer=
 zram=
@@ -28,14 +28,14 @@ mirror="http://http.kali.org/kali"
 password=
 use_docker=
 username=
-no_blockmap=
-ssh=
+no_blockmap=1
+ssh=1
 debian_suite="kali-rolling"
 suite="forky"
 contrib="true"
 sign=
-miniramfs=
-verbose=
+miniramfs=1
+verbose=1
 
 while getopts "cdDvizobsZCrR:x:S:e:H:f:g:h:m:M:p:t:u:F:" opt
 do
@@ -92,7 +92,7 @@ case "${device}" in
     fi
     family="qcom"
     SECTSIZE="$(tomlq -r '.bootimg.pagesize' devices/qcom/configs/${device}.toml)"
-    ARGS="${ARGS} -e MKE2FS_DEVICE_SECTSIZE:${SECTSIZE} -t nonfree:true -t bootonroot:false"
+    ARGS="${ARGS} -e MKE2FS_DEVICE_SECTSIZE:${SECTSIZE} -t nonfree:true -t bootonroot:true"
     ;;
   "amd64"|"amd64-free" )
     arch="amd64"
