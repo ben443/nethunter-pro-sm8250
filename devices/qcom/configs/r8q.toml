@@ -1,12 +1,14 @@
 chipset = "sm8250"
 
 [bootimg]
+version = 2
 base = 0x0
 bootsize = 0x4000000
 kernel = 0x8000
 ramdisk = 0x1000000
 second = 0
 tags = 0x100
+dtb = 0x0
 pagesize = 0x1000
 name = ""
 

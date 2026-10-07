@@ -338,6 +338,6 @@ for i in $(seq 0 $(tomlq -r '.device | length - 1' "${CONFIG}")); do
 
     # Create the bootimg as it's the only format recognized by the Android bootloader
     mkbootimg -o "./bootimg-${FULLMODEL}" ${BOOTIMG_ARGS} \
-        --kernel "${KERNEL_ARG}" --header_version "2" --dtb "sm8250-samsung-r8q.dtb" --ramdisk "${RAMDISK_IMAGE}" \
+        --kernel "${KERNEL_ARG}" --ramdisk "${RAMDISK_IMAGE}" \
         --cmdline "mobile.root=${ROOTPART} ${CMDLINE} init=/sbin/init ro ${LOGLEVEL} splash"
 done

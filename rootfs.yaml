@@ -37,6 +37,7 @@ actions:
     description: Install mobian-archive-keyring
     packages:
       - ca-certificates
+      - debian-archive-keyring
       - mobian-archive-keyring
 
   - action: overlay
