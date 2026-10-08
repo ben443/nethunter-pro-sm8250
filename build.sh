@@ -10,7 +10,7 @@ fi
 
 ## NOTE: If editing below, make sure to update `./*.yml` for GitLab-CI, as it doesn't call this file (`./build.sh`)
 device="r8q"
-image="zimage"
+image="Image"
 partitiontable="gpt"
 filesystem="ext4"
 environment="phosh"
@@ -19,7 +19,7 @@ crypt_password=
 hostname=
 arch="arm64"
 do_compress=
-family=qcom
+family="qcom"
 image_only=
 installer=
 zram=
