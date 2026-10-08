@@ -10,7 +10,7 @@ fi
 
 ## NOTE: If editing below, make sure to update `./*.yml` for GitLab-CI, as it doesn't call this file (`./build.sh`)
 device="r8q"
-image="Image"
+image="image"
 partitiontable="gpt"
 filesystem="ext4"
 environment="phosh"
