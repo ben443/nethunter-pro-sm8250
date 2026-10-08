@@ -284,7 +284,7 @@ for i in $(seq 0 $(tomlq -r '.device | length - 1' "${CONFIG}")); do
     DTB_MODEL=$(tomlq -r "if .device[$i].dtb_model then .device[$i].dtb_model else \"${MODEL}\" end" ${CONFIG})
     DTB_VARIANT=$(tomlq -r "if .device[$i].dtb_variant then .device[$i].dtb_variant else \"${VARIANT}\" end" ${CONFIG})
     APPEND=$(tomlq -r "if .device[$i].append then .device[$i].append else \"\" end" ${CONFIG})
-    APPEND_DTB_TO_KERNEL=$(tomlq -r "if .device[$i].append_dtb_to_kernel == false then \"false\" else \"true\" end" ${CONFIG})
+    APPEND_DTB_TO_KERNEL=$(tomlq -r "if .device[$i].append_dtb_to_kernel == false then \"false\" else \"true\" end" "${CONFIG}")
     DTB_MODEL_FALLBACKS=$(tomlq -r "if .device[$i].dtb_model_fallbacks then .device[$i].dtb_model_fallbacks[] else empty end" ${CONFIG})
     # Extract device-specific bootimg parameters in JSON format for processing by `bootimg_offsets()`
     DEVICE_BOOTIMG=$(tomlq -r "if .device[$i].bootimg then .device[$i].bootimg else \"\" end" ${CONFIG})
