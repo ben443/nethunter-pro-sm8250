@@ -25,6 +25,10 @@ bootimg_offsets() {
     local TAGS="$(echo "${BOOTIMG}" | jq -r '.tags + .base' -)"
     local PAGE_SIZE="$(echo "${BOOTIMG}" | jq -r '.pagesize' -)"
     local DTB="$(echo "${BOOTIMG}" | jq -r 'if .dtb then .dtb + .base else "" end' -)"
+    local BOARD OS_VERSION OS_PATCH_LEVEL
+    BOARD="$(echo "${BOOTIMG}" | jq -r 'if .board then .board else "" end' -)"
+    OS_VERSION="$(echo "${BOOTIMG}" | jq -r 'if .os_version then .os_version else "" end' -)"
+    OS_PATCH_LEVEL="$(echo "${BOOTIMG}" | jq -r 'if .os_patch_level then .os_patch_level else "" end' -)"
 
     local ARGS="--kernel_offset ${KERNEL} --ramdisk_offset ${RAMDISK}"
     ARGS="${ARGS} --second_offset ${SECOND} --tags_offset ${TAGS}"
@@ -36,6 +40,16 @@ bootimg_offsets() {
 
     if [ "${DTB}" ]; then
         ARGS="${ARGS} --dtb_offset ${DTB}"
+    fi
+
+    if [ "${BOARD}" ]; then
+        ARGS="${ARGS} --board ${BOARD}"
+    fi
+    if [ "${OS_VERSION}" ]; then
+        ARGS="${ARGS} --os_version ${OS_VERSION}"
+    fi
+    if [ "${OS_PATCH_LEVEL}" ]; then
+        ARGS="${ARGS} --os_patch_level ${OS_PATCH_LEVEL}"
     fi
 
     echo "${ARGS}"
@@ -271,6 +285,7 @@ for i in $(seq 0 $(tomlq -r '.device | length - 1' "${CONFIG}")); do
     DTB_MODEL=$(tomlq -r "if .device[$i].dtb_model then .device[$i].dtb_model else \"${MODEL}\" end" ${CONFIG})
     DTB_VARIANT=$(tomlq -r "if .device[$i].dtb_variant then .device[$i].dtb_variant else \"${VARIANT}\" end" ${CONFIG})
     APPEND=$(tomlq -r "if .device[$i].append then .device[$i].append else \"\" end" ${CONFIG})
+    APPEND_DTB_TO_KERNEL=$(tomlq -r "if .device[$i].append_dtb_to_kernel == false then \"false\" else \"true\" end" "${CONFIG}")
     DTB_MODEL_FALLBACKS=$(tomlq -r "if .device[$i].dtb_model_fallbacks then .device[$i].dtb_model_fallbacks[] else empty end" ${CONFIG})
     # Extract device-specific bootimg parameters in JSON format for processing by `bootimg_offsets()`
     DEVICE_BOOTIMG=$(tomlq -r "if .device[$i].bootimg then .device[$i].bootimg else \"\" end" ${CONFIG})
@@ -329,9 +344,11 @@ for i in $(seq 0 $(tomlq -r '.device | length - 1' "${CONFIG}")); do
             continue
         fi
         BOOTIMG_ARGS="${BOOTIMG_ARGS} --dtb ${DTB_FILE}"
-        KERNEL_DTB="${WORKDIR}/kernel-dtb-${FULLMODEL}"
-        cat "${KERNEL_IMAGE}" "${DTB_FILE}" > "${KERNEL_DTB}"
-        KERNEL_ARG="${KERNEL_DTB}"
+        if [ "${APPEND_DTB_TO_KERNEL}" = "true" ]; then
+            KERNEL_DTB="${WORKDIR}/kernel-dtb-${FULLMODEL}"
+            cat "${KERNEL_IMAGE}" "${DTB_FILE}" > "${KERNEL_DTB}"
+            KERNEL_ARG="${KERNEL_DTB}"
+        fi
     fi
 
     echo "Creating boot image for ${FULLMODEL}..."
