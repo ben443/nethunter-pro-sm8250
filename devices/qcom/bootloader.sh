@@ -25,9 +25,10 @@ bootimg_offsets() {
     local TAGS="$(echo "${BOOTIMG}" | jq -r '.tags + .base' -)"
     local PAGE_SIZE="$(echo "${BOOTIMG}" | jq -r '.pagesize' -)"
     local DTB="$(echo "${BOOTIMG}" | jq -r 'if .dtb then .dtb + .base else "" end' -)"
-    local BOARD="$(echo "${BOOTIMG}" | jq -r 'if .board then .board else "" end' -)"
-    local OS_VERSION="$(echo "${BOOTIMG}" | jq -r 'if .os_version then .os_version else "" end' -)"
-    local OS_PATCH_LEVEL="$(echo "${BOOTIMG}" | jq -r 'if .os_patch_level then .os_patch_level else "" end' -)"
+    local BOARD OS_VERSION OS_PATCH_LEVEL
+    BOARD="$(echo "${BOOTIMG}" | jq -r 'if .board then .board else "" end' -)"
+    OS_VERSION="$(echo "${BOOTIMG}" | jq -r 'if .os_version then .os_version else "" end' -)"
+    OS_PATCH_LEVEL="$(echo "${BOOTIMG}" | jq -r 'if .os_patch_level then .os_patch_level else "" end' -)"
 
     local ARGS="--kernel_offset ${KERNEL} --ramdisk_offset ${RAMDISK}"
     ARGS="${ARGS} --second_offset ${SECOND} --tags_offset ${TAGS}"
