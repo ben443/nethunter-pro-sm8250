@@ -34,30 +34,48 @@ if [ -z "${IMGPART}" ] || [ -z "${IMGRELPATH}" ]; then
     exit 0
 fi
 
-# Resolve block device by raw name or blkid tag (PARTLABEL=, UUID=, LABEL=)
-if [ -b "/dev/${IMGPART}" ]; then
-    DEVICE="/dev/${IMGPART}"
-elif DEVICE="$(blkid -l -t "${IMGPART}" -o device 2>/dev/null)" && [ -b "${DEVICE}" ]; then
-    : # DEVICE assigned above
-else
-    log_warning_msg "cannot resolve device for '${IMGPART}'"
-    exit 1
-fi
-
-# Mount partition read-only, then attach the image as a loop device
 MNTDIR="/run/rootimg-mnt"
 mkdir -p "${MNTDIR}"
-FSTYPE="$(blkid "${DEVICE}" -o value -s TYPE)"
-mount -r -t "${FSTYPE}" "${DEVICE}" "${MNTDIR}"
+WAIT_SECS="${ROOTIMG_WAIT_SECS:-30}"
+attempt=0
 
-IMGPATH="${MNTDIR}/${IMGRELPATH}"
+while [ "${attempt}" -lt "${WAIT_SECS}" ]; do
+    attempt=$((attempt + 1))
 
-if [ ! -f "${IMGPATH}" ]; then
-    log_warning_msg "image not found: ${IMGPATH}"
-    umount "${MNTDIR}"
-    rmdir "${MNTDIR}"
-    exit 1
-fi
+    # Resolve block device by raw name or blkid tag (PARTLABEL=, UUID=, LABEL=)
+    DEVICE=""
+    if [ -b "/dev/${IMGPART}" ]; then
+        DEVICE="/dev/${IMGPART}"
+    elif DEVICE="$(blkid -l -t "${IMGPART}" -o device 2>/dev/null)" && [ -b "${DEVICE}" ]; then
+        : # DEVICE assigned above
+    fi
 
-LOOP="$(losetup --find --show "${IMGPATH}")"
-log_success_msg "${IMGPATH} → ${LOOP}"
+    if [ -n "${DEVICE}" ]; then
+        FSTYPE="$(blkid "${DEVICE}" -o value -s TYPE 2>/dev/null || true)"
+        MOUNTED=0
+        if [ -n "${FSTYPE}" ] && mount -r -t "${FSTYPE}" "${DEVICE}" "${MNTDIR}" 2>/dev/null; then
+            MOUNTED=1
+        elif mount -r "${DEVICE}" "${MNTDIR}" 2>/dev/null; then
+            MOUNTED=1
+        fi
+        if [ "${MOUNTED}" -eq 1 ]; then
+            IMGPATH="${MNTDIR}/${IMGRELPATH}"
+            if [ -f "${IMGPATH}" ]; then
+                LOOP="$(losetup --find --show "${IMGPATH}" 2>/dev/null || true)"
+                if [ -n "${LOOP}" ]; then
+                    log_success_msg "${IMGPATH} → ${LOOP}"
+                    exit 0
+                fi
+            fi
+            umount "${MNTDIR}" 2>/dev/null || true
+        fi
+    fi
+
+    if [ "${attempt}" -lt "${WAIT_SECS}" ]; then
+        sleep 1
+    fi
+done
+
+rmdir "${MNTDIR}" 2>/dev/null || true
+log_warning_msg "unable to mount '${IMGPART}' and attach '${IMGRELPATH}' after ${WAIT_SECS}s"
+exit 1
