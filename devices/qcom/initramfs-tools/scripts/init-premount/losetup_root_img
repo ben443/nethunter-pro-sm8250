@@ -52,7 +52,13 @@ while [ "${attempt}" -lt "${WAIT_SECS}" ]; do
 
     if [ -n "${DEVICE}" ]; then
         FSTYPE="$(blkid "${DEVICE}" -o value -s TYPE 2>/dev/null || true)"
+        MOUNTED=0
         if [ -n "${FSTYPE}" ] && mount -r -t "${FSTYPE}" "${DEVICE}" "${MNTDIR}" 2>/dev/null; then
+            MOUNTED=1
+        elif mount -r "${DEVICE}" "${MNTDIR}" 2>/dev/null; then
+            MOUNTED=1
+        fi
+        if [ "${MOUNTED}" -eq 1 ]; then
             IMGPATH="${MNTDIR}/${IMGRELPATH}"
             if [ -f "${IMGPATH}" ]; then
                 LOOP="$(losetup --find --show "${IMGPATH}" 2>/dev/null || true)"
