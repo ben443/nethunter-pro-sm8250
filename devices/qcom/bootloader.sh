@@ -77,6 +77,17 @@ resolve_ramdisk_path() {
     return 1
 }
 
+ensure_gzip_artifact() {
+    input="$1"
+    output="$2"
+
+    if gzip -t "${input}" >/dev/null 2>&1; then
+        cp "${input}" "${output}"
+    else
+        gzip -n -c "${input}" > "${output}"
+    fi
+}
+
 ensure_ramdisk_for_version() {
     version="$1"
     if resolve_ramdisk_path "${version}" >/dev/null 2>&1; then
@@ -269,6 +280,18 @@ fi
 if [ -z "${KERNEL_IMAGE}" ] || [ -z "${KERNEL_VERSION}" ] || [ -z "${RAMDISK_IMAGE}" ]; then
     echo "WARN: unable to locate matching kernel and ramdisk artifacts for ${DEVICE}; skipping boot image generation"
     exit 0
+fi
+
+if [ "${DEVICE}" = "r8q" ]; then
+    GZIP_KERNEL="${WORKDIR}/kernel-${KERNEL_VERSION}.gz"
+    GZIP_RAMDISK="${WORKDIR}/ramdisk-${KERNEL_VERSION}.gz"
+    if ! ensure_gzip_artifact "${KERNEL_IMAGE}" "${GZIP_KERNEL}" ||
+        ! ensure_gzip_artifact "${RAMDISK_IMAGE}" "${GZIP_RAMDISK}"; then
+        echo "ERROR: unable to gzip kernel and ramdisk artifacts for r8q" >&2
+        exit 1
+    fi
+    KERNEL_IMAGE="${GZIP_KERNEL}"
+    RAMDISK_IMAGE="${GZIP_RAMDISK}"
 fi
 
 # Parse config for generic parameters for the current SoC
